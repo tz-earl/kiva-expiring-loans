@@ -17,19 +17,20 @@ class ExpiringLoans
     {
     }
 
-    public function fetchExpiringLoans(int $hours_to_expiration)
+    public function fetchExpiringLoans()
     {
         $api_url = 'http://api.kivaws.org/graphql';
 
         $limit = 1000;  // No apparent problem handling this "batch" size for the query,
-                        // but have had problems with 3500 producing in an empty result set.
+                        // but have had problems with 3500 producing an empty result set.
 
         $cumulative = [];
 
-        for ($offset = 0; ; $offset += $limit) {
-
-            $query = urlencode("{ loans (filters: { status: fundRaising }, offset:$offset, limit: $limit, sortBy: newest)" .
-                                        ' { totalCount values { id loanAmount plannedExpirationDate } } }');
+        // Fetch all loans that are fundRaising.
+        for ($offset = 0;; $offset += $limit) {
+            $query = urlencode('{ loans (filters: { status: fundRaising },' .
+                " offset:$offset, limit: $limit, sortBy: newest)" .
+                ' { totalCount values { id loanAmount plannedExpirationDate } } }');
 
             $complete_url = $api_url . '?query=' . $query;
 
@@ -62,6 +63,20 @@ class ExpiringLoans
             }
         }
 
-        return $cumulative;
+        // Extract out those loans expiring within 24 hours.
+        $time_limit = time() + (24 * 60 * 60);
+
+        $expiring_loans = [];
+
+        for ($idx = 0; $idx < count($cumulative); $idx++) {
+            $expiry_str = $cumulative[$idx]->plannedExpirationDate;
+            $expiry_time = strtotime($expiry_str);
+
+            if ($expiry_time <= $time_limit) {
+                $expiring_loans[] = $cumulative[$idx];
+            }
+        }
+
+        return $expiring_loans;
     }
 }

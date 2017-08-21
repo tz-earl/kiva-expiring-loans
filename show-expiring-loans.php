@@ -13,12 +13,12 @@ use Kiva\ExpiringLoans;
 function showExpiringLoans()
 {
     $exp_loans = new ExpiringLoans;
-    $result = $exp_loans->fetchExpiringLoans(24);
+    $expiring = $exp_loans->fetchExpiringLoans();
 
     // Debugging.
-    print count($result);
+    print count($expiring);
     print '<br />';
-    print_r($result);
+    print_r($expiring);
 }
 
 showExpiringLoans();
