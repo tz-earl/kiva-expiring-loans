@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Kiva;
 
+use \Exception;
+
 class ExpiringLoans
 {
     public function __construct()
@@ -48,12 +50,18 @@ class ExpiringLoans
             curl_close($ch);
 
             if ($curl_result === false) {
-                throw new Exception('Could not connect to Kiva, or timed out.');
+                throw new Exception('Could not connect to Kiva API, or timed out.');
             }
 
             // Parse the json result into a PHP object, then extract out
             // just the array of loan items.
             $result = json_decode($curl_result);
+
+            if (isset($result->errors)) {
+                $error_msg = $result->errors[0]->message;
+                throw new Exception('Kiva API - ' . $error_msg);
+            }
+
             $result = $result->data->loans->values;
 
             $cumulative = array_merge($cumulative, $result);
