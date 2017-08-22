@@ -55,7 +55,7 @@ for ($idx = 0; $idx < $loan_cnt; $idx++) {
     $loan_amt = $expiring[$idx]->loanAmount;
     $amt_formatted = number_format($loan_amt, 2, '.', ',');
 
-    $loan_funded = $expiring[$idx]->fundedAmount;
+    $loan_funded = $expiring[$idx]->loanFundraisingInfo->fundedAmount;
     $loan_remaining = $loan_amt - $loan_funded;
     $remaining_formatted = number_format($loan_remaining, 2, '.', ',');
 

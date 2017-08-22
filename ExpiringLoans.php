@@ -32,7 +32,8 @@ class ExpiringLoans
         for ($offset = 0;; $offset += $limit) {
             $query = urlencode('{ loans (filters: { status: fundRaising },' .
                 " offset:$offset, limit: $limit, sortBy: newest)" .
-                ' { totalCount values { id loanAmount fundedAmount plannedExpirationDate } } }');
+                ' { totalCount values { id loanAmount plannedExpirationDate ' .
+                '     loanFundraisingInfo { fundedAmount } } } }');
 
             $complete_url = $api_url . '?query=' . $query;
 
