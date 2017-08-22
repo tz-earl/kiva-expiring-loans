@@ -31,8 +31,8 @@ $expiring = array_reverse($expiring);
 $loan_cnt = count($expiring);
 print "<h4>Number of expiring loans is $loan_cnt </h4>\n";
 
-for ($idx = 0, $total_loan_amounts = 0; $idx < $loan_cnt; $idx++ ) {
-  $total_loan_amounts += $expiring[$idx]->loanAmount;
+for ($idx = 0, $total_loan_amounts = 0; $idx < $loan_cnt; $idx++) {
+    $total_loan_amounts += $expiring[$idx]->loanAmount;
 }
 $total_formatted = number_format($total_loan_amounts, 2, '.', ',');
 print "<h4>Total amount of these loans is  $total_formatted </h4>\n";
@@ -50,9 +50,10 @@ for ($idx = 0; $idx < $loan_cnt; $idx++) {
     // into something a little more readable.
     $loan_expiry = $expiring[$idx]->plannedExpirationDate;
     $loan_expiry = strtotime($loan_expiry);
-    $loan_expiry = gmdate('M j, Y g:ia', $loan_expiry);
+    $expiry_formatted = gmdate('M j, Y g:ia', $loan_expiry);
 
     $loan_amt = $expiring[$idx]->loanAmount;
+    $amt_formatted = number_format($loan_amt, 2, '.', ',');
 
     $loan_funded = $expiring[$idx]->fundedAmount;
     $loan_remaining = $loan_amt - $loan_funded;
@@ -60,7 +61,7 @@ for ($idx = 0; $idx < $loan_cnt; $idx++) {
 
     print "<tr>\n";
     print "<td><a href='https://www.kiva.org/lend/$loan_id'>$loan_id</a></td>" .
-          "<td>$loan_expiry</td><td class='amount'>$loan_amt</td>" .
+          "<td>$expiry_formatted</td><td class='amount'>$amt_formatted</td>" .
           "<td class='amount'>$remaining_formatted</td>\n";
     print "</tr>\n";
 }
