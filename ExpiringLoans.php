@@ -15,14 +15,17 @@ use \Exception;
 
 class ExpiringLoans
 {
-    public function __construct()
+    public $api_url = null;
+    public $expiring_loans = null;
+
+    public function __construct(string $url)
     {
+        $this->api_url = $url;
+
     }
 
     public function fetchExpiringLoans()
     {
-        $api_url = 'http://api.kivaws.org/graphql';
-
         $limit = 1000;  // No apparent problem handling this "batch" size for the query,
                         // but have had problems with 3500 producing an empty result set.
 
@@ -35,11 +38,11 @@ class ExpiringLoans
                 ' { totalCount values { id loanAmount plannedExpirationDate ' .
                 '     loanFundraisingInfo { fundedAmount } } } }');
 
-            $complete_url = $api_url . '?query=' . $query;
+            $query_url = $this->api_url . '?query=' . $query;
 
             $ch = curl_init();
 
-            curl_setopt($ch, CURLOPT_URL, $complete_url);
+            curl_setopt($ch, CURLOPT_URL, $query_url);
 
             curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 60);  // in seconds
             curl_setopt($ch, CURLOPT_TIMEOUT, 60);  // in seconds
@@ -86,6 +89,23 @@ class ExpiringLoans
             }
         }
 
-        return $expiring_loans;
+        $this->expiring_loans = $expiring_loans;
+
+        return $this->expiring_loans;
+    }
+
+    public function totalAmount()
+    {
+        if (!$this->expiring_loans) {
+            return 0;
+        }
+
+        $loan_cnt = count($this->expiring_loans);
+
+        for ($idx = 0, $total = 0; $idx < $loan_cnt; $idx++) {
+            $total += $this->expiring_loans[$idx]->loanAmount;
+        }
+
+        return $total;
     }
 }

@@ -22,7 +22,7 @@ include 'ExpiringLoans.php';
 
 use Kiva\ExpiringLoans;
 
-$exp_loans = new ExpiringLoans;
+$exp_loans = new ExpiringLoans('http://api.kivaws.org/graphql');
 $expiring = $exp_loans->fetchExpiringLoans();
 
 // Roughly order by expiring the soonest.
@@ -31,9 +31,7 @@ $expiring = array_reverse($expiring);
 $loan_cnt = count($expiring);
 print "<h4>Number of expiring loans is $loan_cnt </h4>\n";
 
-for ($idx = 0, $total_loan_amounts = 0; $idx < $loan_cnt; $idx++) {
-    $total_loan_amounts += $expiring[$idx]->loanAmount;
-}
+$total_loan_amounts = $exp_loans->totalAmount();
 $total_formatted = number_format($total_loan_amounts, 2, '.', ',');
 print "<h4>Total amount of these loans is  $total_formatted </h4>\n";
 
