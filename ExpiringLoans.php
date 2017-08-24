@@ -21,12 +21,11 @@ class ExpiringLoans
     public function __construct(string $url)
     {
         $this->api_url = $url;
-
     }
 
     public function fetchExpiringLoans()
     {
-        $limit = 1000;  // No apparent problem handling this "batch" size for the query,
+        $limit = 2000;  // No apparent problem handling this "batch" size for the query,
                         // but have had problems with 3500 producing an empty result set.
 
         $cumulative = [];
@@ -70,7 +69,7 @@ class ExpiringLoans
 
             $cumulative = array_merge($cumulative, $result);
 
-            if (count($result) === 0) {
+            if (count($result) < $limit) {
                 break;
             }
         }
