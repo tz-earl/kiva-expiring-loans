@@ -13,17 +13,24 @@ namespace Kiva;
 
 use \Exception;
 
+define('GRAPHQL_URL', 'http://api.kivaws.org/graphql');
+
 class ExpiringLoans
 {
-    public $api_url = null;
-    public $expiring_loans = null;
+    private $api_url = null;
+    private $expiring_loans = null;
 
-    public function __construct(string $url)
+    public function __construct(string $url = '')
     {
-        $this->api_url = $url;
+        $this->api_url = $url ? $url : GRAPHQL_URL;
     }
 
-    public function fetchExpiringLoans()
+    /**
+     * Fetch all fundraising loans using the GraphQL API.
+     *
+     * @return object[]
+     */
+    private function fetchLoansFromGraphQL()
     {
         $limit = 2000;  // No apparent problem handling this "batch" size for the query,
                         // but have had problems with 3500 producing an empty result set.
@@ -74,17 +81,30 @@ class ExpiringLoans
             }
         }
 
+        return $cumulative;
+    }
+
+    /**
+     * Fetch fundraising loans that expire within 24 hours.
+     *
+     * @return object[]
+     */
+    public function fetchExpiringLoans()
+    {
+        // Fetch all loans that are fundraising.
+        $all_fundraising = $this->fetchLoansFromGraphQL();
+
         // Extract out those loans expiring within 24 hours.
         $time_limit = time() + (24 * 60 * 60);
 
         $expiring_loans = [];
 
-        for ($idx = 0; $idx < count($cumulative); $idx++) {
-            $expiry_str = $cumulative[$idx]->plannedExpirationDate;
+        for ($idx = 0; $idx < count($all_fundraising); $idx++) {
+            $expiry_str = $all_fundraising[$idx]->plannedExpirationDate;
             $expiry_time = strtotime($expiry_str);
 
             if ($expiry_time <= $time_limit) {
-                $expiring_loans[] = $cumulative[$idx];
+                $expiring_loans[] = $all_fundraising[$idx];
             }
         }
 
@@ -93,10 +113,15 @@ class ExpiringLoans
         return $this->expiring_loans;
     }
 
+    /**
+     * Calculate the total loan amount of all loans that are expiring.
+     *
+     * @return int
+     */
     public function totalAmount()
     {
         if (!$this->expiring_loans) {
-            return 0;
+            $this->fetchExpiringLoans();
         }
 
         $loan_cnt = count($this->expiring_loans);

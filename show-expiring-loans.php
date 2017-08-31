@@ -22,7 +22,7 @@ include 'ExpiringLoans.php';
 
 use Kiva\ExpiringLoans;
 
-$exp_loans = new ExpiringLoans('http://api.kivaws.org/graphql');
+$exp_loans = new ExpiringLoans();
 $expiring = $exp_loans->fetchExpiringLoans();
 
 // Roughly order by expiring the soonest.
