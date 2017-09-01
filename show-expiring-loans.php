@@ -18,7 +18,7 @@ td {
 <body>
 <h3>Kiva Fundraising Loans that Expire Soon</h3>
 <?php
-include 'ExpiringLoans.php';
+require 'ExpiringLoans.php';
 
 use Kiva\ExpiringLoans;
 

@@ -14,6 +14,8 @@ namespace Kiva;
 use \Exception;
 
 define('GRAPHQL_URL', 'http://api.kivaws.org/graphql');
+define('TEST_URL', 'testdata');
+define('TEST_FILENAME', 'testdata.json');
 
 class ExpiringLoans
 {
@@ -26,7 +28,24 @@ class ExpiringLoans
     }
 
     /**
-     * Fetch all fundraising loans using the GraphQL API.
+     * Parse the incoming json into an object,
+     * then extract just the array of loans.
+     */
+    private function parseOneBatch(string $json_data)
+    {
+        $result = json_decode($json_data);
+
+        if (isset($result->errors)) {
+            $error_msg = $result->errors[0]->message;
+            throw new Exception('Kiva API - ' . $error_msg);
+        }
+
+        $loans = $result->data->loans->values;
+        return $loans;
+    }
+
+    /**
+     * Fetch all fundRaising loans using the GraphQL API.
      *
      * @return object[]
      */
@@ -55,33 +74,35 @@ class ExpiringLoans
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_HEADER, false);
 
-            $curl_result = curl_exec($ch);
+            $curl_data = curl_exec($ch);
 
             curl_close($ch);
 
-            if ($curl_result === false) {
+            if ($curl_data === false) {
                 throw new Exception('Could not connect to Kiva API, or timed out.');
             }
 
-            // Parse the json result into a PHP object, then extract out
-            // just the array of loan items.
-            $result = json_decode($curl_result);
+            $loans = $this->parseOneBatch($curl_data);
+            $cumulative = array_merge($cumulative, $loans);
 
-            if (isset($result->errors)) {
-                $error_msg = $result->errors[0]->message;
-                throw new Exception('Kiva API - ' . $error_msg);
-            }
-
-            $result = $result->data->loans->values;
-
-            $cumulative = array_merge($cumulative, $result);
-
-            if (count($result) < $limit) {
+            if (count($loans) < $limit) {
                 break;
             }
         }
 
         return $cumulative;
+    }
+
+    /**
+     * Fetch all fundraising loans from test data.
+     *
+     * @return object[]
+     */
+    private function fetchLoansFromTestData()
+    {
+        $testdata = file_get_contents(TEST_FILENAME);
+        $loans = $this->parseOneBatch($testdata);
+        return $loans;
     }
 
     /**
@@ -92,19 +113,29 @@ class ExpiringLoans
     public function fetchExpiringLoans()
     {
         // Fetch all loans that are fundraising.
-        $all_fundraising = $this->fetchLoansFromGraphQL();
+        switch ($this->api_url) {
+            case GRAPHQL_URL:
+                $fund_raising = $this->fetchLoansFromGraphQL();
+                break;
+            case TEST_URL:
+                $fund_raising = $this->fetchLoansFromTestData();
+                break;
+            default:
+                assert(false);
+                break;
+        }
 
         // Extract out those loans expiring within 24 hours.
         $time_limit = time() + (24 * 60 * 60);
 
         $expiring_loans = [];
 
-        for ($idx = 0; $idx < count($all_fundraising); $idx++) {
-            $expiry_str = $all_fundraising[$idx]->plannedExpirationDate;
+        for ($idx = 0; $idx < count($fund_raising); $idx++) {
+            $expiry_str = $fund_raising[$idx]->plannedExpirationDate;
             $expiry_time = strtotime($expiry_str);
 
             if ($expiry_time <= $time_limit) {
-                $expiring_loans[] = $all_fundraising[$idx];
+                $expiring_loans[] = $fund_raising[$idx];
             }
         }
 
