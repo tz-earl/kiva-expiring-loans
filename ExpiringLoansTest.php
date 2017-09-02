@@ -27,10 +27,13 @@ final class ExpiringLoansTest extends TestCase
         $bytes_written = file_put_contents(TEST_FILENAME, $testdata);
         assert($bytes_written > 0);
 
-        // Check that loan count is all loans in test file.
+        // Check that loan count is all loans in test file and total loan amt is correct.
         $inst = new ExpiringLoans('testdata');
         $expiring = $inst->fetchExpiringLoans();
         $this->assertCount(14, $expiring, 'Expected loan count not correct');
+
+        $total = $inst->totalAmount();
+        $this->assertEquals($total, 29300);
     }
 
     /**
@@ -45,10 +48,13 @@ final class ExpiringLoansTest extends TestCase
         $bytes_written = file_put_contents(TEST_FILENAME, $testdata);
         assert($bytes_written > 0);
 
-        // Check that loan count is all loans in test file.
+        // Check that loan count is all loans in test file and total loan amt is zero.
         $inst = new ExpiringLoans('testdata');
         $expiring = $inst->fetchExpiringLoans();
         $this->assertCount(0, $expiring, 'Expected loan count not correct');
+
+        $total = $inst->totalAmount();
+        $this->assertEquals($total, 0);
     }
 
     /**
@@ -66,9 +72,14 @@ final class ExpiringLoansTest extends TestCase
         $bytes_written = file_put_contents(TEST_FILENAME, $testdata);
         assert($bytes_written > 0);
 
-        // Check that loan count is some loans in test file.
+        // Check that loan count is some loans in test file and total loan amt is correct.
         $inst = new ExpiringLoans('testdata');
         $expiring = $inst->fetchExpiringLoans();
         $this->assertCount(5, $expiring, 'Expected loan count not correct');
+
+
+        $total = $inst->totalAmount();
+        $this->assertEquals($total, 10125);
+
     }
 }
