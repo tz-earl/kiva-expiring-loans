@@ -15,6 +15,7 @@ use \Exception;
 
 define('GRAPHQL_URL', 'http://api.kivaws.org/graphql');
 define('TEST_URL', 'testdata');
+define('TEST_BASE', 'testdata.base');
 define('TEST_FILENAME', 'testdata.json');
 
 class ExpiringLoans
